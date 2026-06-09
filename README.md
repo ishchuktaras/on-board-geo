@@ -31,5 +31,19 @@ Pro produkční nasazení bych přidal **Zod** pro striktní validaci vstupů z 
 
 ---
 
-## Část B: Zkušenosti s tvorbou webů
-Jsem OSVČ, tvořím weby a aplikace na míru. Zastávám strategický přístup s důrazem na discovery fázi a reálné ROI pro klienta. Můj primární tech stack je Next.js, Tailwind a moderní headless řešení. Kód píšu čistě, s ohledem na SEO a přístupnost. Mám zkušenosti s vývojem SaaS řešení (např. systém APIS pro beauty segment) i s budováním firemních identit s napojením na automatizace. K vývoji přistupuji racionálně, bez iluzí – zajímá mě stabilita kódu a byznysový výsledek.
+## Část B: Zkušenosti s tvorbou webů a přístup k vývoji
+
+Jsem OSVČ a od začátku své kariéry se striktně zaměřuji na vývoj webů a aplikací na míru pomocí moderního JavaScript/TypeScript ekosystému. K vývoji přistupuji racionálně, jako inženýr – zajímá mě čistá architektura, stabilita kódu a byznysový výsledek.
+
+**1. Zkušenosti s krabicovými řešeními (WordPress, Shoptet, Shopify, Framer, Webflow)**
+Budu naprosto upřímný: s těmito nástroji nemám praktické zkušenosti a nepracuji s nimi. Záměrně jsem se vyhnul učení se klikání v page builderech a administracích CMS systémů. Místo toho jsem veškerý svůj čas a energii investoval do hlubokého pochopení programování a vlastního kódu (React, Next.js, Node.js). Volím tento přístup proto, že mi dává absolutní kontrolu nad výkonem, bezpečností a SEO, a umožňuje mi tvořit komplexní SaaS aplikace nebo nativní integrace s AI, kde krabicová řešení naráží na své limity.
+
+**2. Můj typický postup (Od briefu po nasazení)**
+1. **Discovery fáze:** Než napíšu řádek kódu, musím znát cíl. Kdo je koncový uživatel? Jaké je ROI projektu?
+2. **Návrh architektury:** Výběr optimálního stacku. Můj standard je Next.js (App Router), Tailwind CSS, TypeScript. Data stavím na moderních headless řešeních (např. Sanity) nebo vlastních databázích.
+3. **Vývoj:** Píšu čistý kód. Striktně mobile-first přístup. Využívám komponentový vývoj pro maximální znovupoužitelnost.
+4. **Nasazení a infrastruktura:** CI/CD pipeline přes Vercel. Automatizace webhooků (např. odesílání leadů do Telegramu nebo CRM klientů).
+
+**3. Co mě na tvorbě webů baví a co ne**
+* **Co mě baví:** Řešení reálných byznysových problémů logikou a kódem. Návrh architektury, integrace AI modelů do reálného využití, práce s daty a optimalizace výkonu. Baví mě ta moc vytvořit z prázdného souboru plně funkční aplikaci s vysokou přidanou hodnotou.
+* **Co mě nebaví:** Omezující mantinely no-code nástrojů, závislost na pluginech třetích stran, "lepení" vizuálu pomocí drag-and-drop editorů a práce bez jasně definovaného zadání.
