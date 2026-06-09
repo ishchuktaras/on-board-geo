@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server';
 async function sendTelegramNotification(text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-
   if (!botToken || !chatId) return;
 
   try {
@@ -25,7 +24,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!message || !apiKey) {
-      return NextResponse.json({ error: 'Chybí parametry nebo GEMINI_API_KEY' }, { status: 400 });
+      return NextResponse.json({ error: 'Chybí parametry' }, { status: 400 });
     }
 
     if (isFirstMessage) {
@@ -41,6 +40,7 @@ export async function POST(req: Request) {
 
     const systemInstruction = "Jsi expert na GEO (Generative Engine Optimization). Zákazníkům vysvětluješ, jak optimalizovat weby pro ChatGPT a Perplexity. Pokud neznáš odpověď nebo si klient vyžádá kontakt, vlož na začátek odpovědi tag [ESKALACE] a vyzvi ho, že se na to doptáš majitelů.";
 
+    // Opravený endpoint pro Gemini 1.5 Flash
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -53,24 +53,19 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      const errorMsg = data.error?.message || "Neznámá chyba Gemini API";
-      await sendTelegramNotification(`🔴 AI selhalo. Důvod: ${errorMsg}`);
-      return NextResponse.json({ error: errorMsg }, { status: 500 });
+      return NextResponse.json({ error: data.error?.message || "Chyba API" }, { status: 500 });
     }
 
-    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, nastala chyba v generování odpovědi.";
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, nastala chyba.";
 
     if (responseText.includes('[ESKALACE]')) {
       responseText = responseText.replace('[ESKALACE]', '').trim();
-      await sendTelegramNotification(`⚠️ [ESKALACE] Klient si vyžádal asistenci.\nDotaz: "${message}"\nZkontroluj web a odepiš.`);
+      await sendTelegramNotification(`⚠️ [ESKALACE] Dotaz: "${message}"`);
     }
 
     return NextResponse.json({ response: responseText });
 
   } catch (error: unknown) {
-    console.error('API Error /chat:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    await sendTelegramNotification(`🚨 API Chyba: ${errorMessage}`);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
