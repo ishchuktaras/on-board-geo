@@ -1,11 +1,6 @@
 export const maxDuration = 60; 
 
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 async function sendTelegramNotification(text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -26,56 +21,51 @@ async function sendTelegramNotification(text: string) {
 
 export async function POST(req: Request) {
   try {
-    const { message, threadId, isFirstMessage, userName, userEmail } = await req.json();
-    const assistantId = process.env.OPENAI_ASSISTANT_ID;
+    const { message, history, isFirstMessage, userName, userEmail } = await req.json();
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!message || !assistantId) {
-      return NextResponse.json({ error: 'Chybí parametry' }, { status: 400 });
+    if (!message || !apiKey) {
+      return NextResponse.json({ error: 'Chybí parametry nebo GEMINI_API_KEY' }, { status: 400 });
     }
 
-    let activeThreadId = threadId;
-
-    // Pokud je to první zpráva z formuláře, upozorníme majitele
-    if (!activeThreadId) {
-      const thread = await openai.beta.threads.create();
-      activeThreadId = thread.id;
-      if (isFirstMessage) {
-         await sendTelegramNotification(`🟢 Nový lead na webu!\nJméno: ${userName}\nEmail: ${userEmail}\nZpráva: ${message}`);
-      }
+    if (isFirstMessage) {
+       await sendTelegramNotification(`🟢 Nový lead na webu!\nJméno: ${userName}\nEmail: ${userEmail}\nZpráva: ${message}`);
     }
 
-    await openai.beta.threads.messages.create(activeThreadId, {
-      role: 'user',
-      content: message,
+    const formattedHistory = history.map((msg: { role: string, content: string }) => ({
+      role: msg.role === 'ai' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+    
+    formattedHistory.push({ role: 'user', parts: [{ text: message }] });
+
+    const systemInstruction = "Jsi expert na GEO (Generative Engine Optimization). Zákazníkům vysvětluješ, jak optimalizovat weby pro ChatGPT a Perplexity. Pokud neznáš odpověď nebo si klient vyžádá kontakt, vlož na začátek odpovědi tag [ESKALACE] a vyzvi ho, že se na to doptáš majitelů.";
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: formattedHistory
+      })
     });
 
-    const run = await openai.beta.threads.runs.createAndPoll(activeThreadId, {
-      assistant_id: assistantId,
-    });
+    const data = await response.json();
 
-    if (run.status === 'completed') {
-      const messages = await openai.beta.threads.messages.list(activeThreadId);
-      const latestAssistantMessage = messages.data.find((msg) => msg.role === 'assistant');
-
-      let responseText = '';
-      if (latestAssistantMessage && latestAssistantMessage.content[0].type === 'text') {
-        responseText = latestAssistantMessage.content[0].text.value;
-      }
-
-      // HUMAN-IN-THE-LOOP LOGIKA
-      if (responseText.includes('[ESKALACE]')) {
-        responseText = responseText.replace('[ESKALACE]', '').trim();
-        await sendTelegramNotification(`⚠️ [ESKALACE] Klient si vyžádal asistenci nebo AI nezná odpověď.\nDotaz: "${message}"\nZkontroluj web.`);
-      }
-
-      return NextResponse.json({ response: responseText, threadId: activeThreadId });
-
-    } else {
-      // Získáme detailní chybovou hlášku přímo z OpenAI
-      const openaiError = run.last_error?.message || "Neznámý důvod";
-      await sendTelegramNotification(`🔴 AI selhalo. Stav: ${run.status}\nDůvod: ${openaiError}`);
-      return NextResponse.json({ error: openaiError }, { status: 500 });
+    if (!response.ok) {
+      const errorMsg = data.error?.message || "Neznámá chyba Gemini API";
+      await sendTelegramNotification(`🔴 AI selhalo. Důvod: ${errorMsg}`);
+      return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
+
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, nastala chyba v generování odpovědi.";
+
+    if (responseText.includes('[ESKALACE]')) {
+      responseText = responseText.replace('[ESKALACE]', '').trim();
+      await sendTelegramNotification(`⚠️ [ESKALACE] Klient si vyžádal asistenci.\nDotaz: "${message}"\nZkontroluj web a odepiš.`);
+    }
+
+    return NextResponse.json({ response: responseText });
 
   } catch (error: unknown) {
     console.error('API Error /chat:', error);
