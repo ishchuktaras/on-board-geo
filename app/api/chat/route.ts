@@ -1,3 +1,5 @@
+export const maxDuration = 60; 
+
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
@@ -69,8 +71,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ response: responseText, threadId: activeThreadId });
 
     } else {
-      await sendTelegramNotification(`🔴 AI selhalo. Stav: ${run.status}`);
-      return NextResponse.json({ error: 'Chyba AI' }, { status: 500 });
+      // Získáme detailní chybovou hlášku přímo z OpenAI
+      const openaiError = run.last_error?.message || "Neznámý důvod";
+      await sendTelegramNotification(`🔴 AI selhalo. Stav: ${run.status}\nDůvod: ${openaiError}`);
+      return NextResponse.json({ error: openaiError }, { status: 500 });
     }
 
   } catch (error: unknown) {

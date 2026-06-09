@@ -39,6 +39,12 @@ export default function ChatBox({ onClose, initialMessage, userName, userEmail }
 
       const data = await res.json();
 
+      // Zpracování chyby ze serveru (ochrana před prázdnou bublinou)
+      if (!res.ok || data.error) {
+        setMessages((prev) => [...prev, { role: 'ai', content: `🚨 Systémová zpráva: ${data.error || 'Spojení se serverem selhalo.'}` }]);
+        return;
+      }
+
       if (data.threadId) {
         setThreadId(data.threadId);
         localStorage.setItem("on-board-thread-id", data.threadId);
@@ -47,6 +53,8 @@ export default function ChatBox({ onClose, initialMessage, userName, userEmail }
       setMessages((prev) => [...prev, { role: 'ai', content: data.response }]);
     } catch (error) {
       console.error("Chyba:", error);
+      // Zpracování chyby sítě (když API vůbec neodpoví)
+      setMessages((prev) => [...prev, { role: 'ai', content: `🚨 Systémová chyba: Aplikaci se nepodařilo odeslat dotaz.` }]);
     } finally {
       setLoading(false);
     }
