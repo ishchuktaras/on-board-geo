@@ -14,7 +14,7 @@ async function sendTelegramNotification(text: string) {
       body: JSON.stringify({ chat_id: chatId, text }),
     });
   } catch (error) {
-    console.error('Selhalo spojení na Telegram API:', error);
+    console.error('Telegram API error:', error);
   }
 }
 
@@ -40,8 +40,10 @@ export async function POST(req: Request) {
 
     const systemInstruction = "Jsi expert na GEO (Generative Engine Optimization). Zákazníkům vysvětluješ, jak optimalizovat weby pro ChatGPT a Perplexity. Pokud neznáš odpověď nebo si klient vyžádá kontakt, vlož na začátek odpovědi tag [ESKALACE] a vyzvi ho, že se na to doptáš majitelů.";
 
-    // Opravený endpoint pro Gemini 1.5 Flash
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // URL endpointu s modelem gemini-1.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -53,10 +55,11 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error("Gemini API Error details:", JSON.stringify(data, null, 2));
       return NextResponse.json({ error: data.error?.message || "Chyba API" }, { status: 500 });
     }
 
-    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, nastala chyba.";
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, chyba.";
 
     if (responseText.includes('[ESKALACE]')) {
       responseText = responseText.replace('[ESKALACE]', '').trim();
@@ -66,6 +69,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ response: responseText });
 
   } catch (error: unknown) {
+    console.error('API Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
