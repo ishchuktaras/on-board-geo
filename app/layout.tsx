@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://on-board-geo.vercel.app"),
   title: "GEO Optima | Generative Engine Optimization",
   description: "Optimalizujte svou značku pro umělou inteligenci. Zajistíme, aby vás ChatGPT, Perplexity a další LLM modely doporučovaly vašim zákazníkům.",
   keywords: ["GEO", "Generative Engine Optimization", "AI SEO", "LLM optimalizace", "marketingová agentura", "ChatGPT marketing"],
@@ -20,24 +21,15 @@ export const metadata: Metadata = {
   openGraph: {
     title: "GEO Optima | Budoucnost vyhledávání je AI",
     description: "Tradiční SEO umírá. Připravte svůj byznys na generativní vyhledávače.",
-    url: "https://on-board-geo-eagn.vercel.app/",
+    url: "https://on-board-geo.vercel.app/",
     siteName: "GEO Optima",
     locale: "cs_CZ",
     type: "website",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "GEO Optima - Generative Engine Optimization",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "GEO Optima | Generative Engine Optimization",
     description: "Optimalizujte svou značku pro ChatGPT a Perplexity.",
-    images: ["/og-image.png"],
   }
 };
 
