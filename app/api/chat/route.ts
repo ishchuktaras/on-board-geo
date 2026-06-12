@@ -1,7 +1,6 @@
 export const maxDuration = 60; 
 
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 async function sendTelegramNotification(text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -22,39 +21,53 @@ async function sendTelegramNotification(text: string) {
 export async function POST(req: Request) {
   try {
     const { message, history, isFirstMessage, userName, userEmail } = await req.json();
-    const apiKey = process.env.GEMINI_API_KEY;
+    
+    // Načítáme klíč pro Groq
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!message || !apiKey) {
-      return NextResponse.json({ error: 'Chybí parametry nebo API klíč' }, { status: 400 });
+      return NextResponse.json({ error: 'Chybí parametry nebo API klíč pro Groq' }, { status: 400 });
     }
 
     if (isFirstMessage) {
        await sendTelegramNotification(`🟢 Nový lead na webu!\nJméno: ${userName}\nEmail: ${userEmail}\nZpráva: ${message}`);
     }
 
-    // Inicializace oficiálního Google SDK
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Použití stabilního modelu s instrukcemi
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash-latest",
-      systemInstruction: "Jsi expert na GEO (Generative Engine Optimization). Zákazníkům vysvětluješ, jak optimalizovat weby pro ChatGPT a Perplexity. Pokud neznáš odpověď nebo si klient vyžádá kontakt, vlož na začátek odpovědi tag [ESKALACE] a vyzvi ho, že se na to doptáš majitelů."
+    // Mapování historie pro standardní OpenAI/Groq API (role: system, user, assistant)
+    const messages = [
+      {
+        role: "system",
+        content: "Jsi expert na GEO (Generative Engine Optimization). Zákazníkům vysvětluješ, jak optimalizovat weby pro ChatGPT a Perplexity. Odpovídej profesionálně a česky. Pokud neznáš odpověď nebo si klient vyžádá kontakt, vlož na začátek odpovědi tag [ESKALACE] a vyzvi ho, že se na to doptáš majitelů."
+      },
+      ...history.map((msg: { role: string, content: string }) => ({
+        role: msg.role === 'ai' ? 'assistant' : 'user',
+        content: msg.content
+      })),
+      { role: "user", content: message }
+    ];
+
+    // Volání Groq API s modelem LLaMA 3.1
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: messages,
+        temperature: 0.7
+      })
     });
 
-    // Přeformátování historie pro SDK
-    const formattedHistory = history.map((msg: { role: string, content: string }) => ({
-      role: msg.role === 'ai' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }));
+    const data = await response.json();
 
-    // Otevření chatu s historií
-    const chat = model.startChat({
-      history: formattedHistory,
-    });
+    if (!response.ok) {
+      console.error("Groq API Error:", JSON.stringify(data, null, 2));
+      return NextResponse.json({ error: data.error?.message || "Chyba poskytovatele AI" }, { status: 500 });
+    }
 
-    // Odeslání zprávy
-    const result = await chat.sendMessage(message);
-    let responseText = result.response.text();
+    let responseText = data.choices?.[0]?.message?.content || "Omlouvám se, nastala chyba při generování odpovědi.";
 
     // Kontrola eskalace
     if (responseText.includes('[ESKALACE]')) {
