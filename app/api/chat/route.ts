@@ -40,8 +40,8 @@ export async function POST(req: Request) {
 
     const systemInstruction = "Jsi expert na GEO (Generative Engine Optimization). Zákazníkům vysvětluješ, jak optimalizovat weby pro ChatGPT a Perplexity. Pokud neznáš odpověď nebo si klient vyžádá kontakt, vlož na začátek odpovědi tag [ESKALACE] a vyzvi ho, že se na to doptáš majitelů.";
 
-    // URL endpointu s modelem gemini-1.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // OPRAVA: Explicitní použití plného názvu modelu 'gemini-1.5-flash-latest'
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: data.error?.message || "Chyba API" }, { status: 500 });
     }
 
-    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, chyba.";
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Omlouvám se, nastala chyba.";
 
     if (responseText.includes('[ESKALACE]')) {
       responseText = responseText.replace('[ESKALACE]', '').trim();
