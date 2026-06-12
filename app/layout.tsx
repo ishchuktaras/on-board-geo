@@ -24,11 +24,20 @@ export const metadata: Metadata = {
     siteName: "GEO Optima",
     locale: "cs_CZ",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GEO Optima - Generative Engine Optimization",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "GEO Optima | Generative Engine Optimization",
     description: "Optimalizujte svou značku pro ChatGPT a Perplexity.",
+    images: ["/og-image.png"],
   }
 };
 
